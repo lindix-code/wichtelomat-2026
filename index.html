@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wichtelo-Mat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Mountains+of+Christmas:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-red: #990000;
             --dark-red: #4a0000;
             --gold: #d4af37;
-            --light-bg: #fff8f8;
+            --paper-bg: #fffbf0;
             --text-color: #333333;
         }
 
@@ -23,66 +24,82 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Schneeflocken Animation */
+        .snowflake {
+            position: absolute;
+            top: -10px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10px) translateX(0); }
+            100% { transform: translateY(105vh) translateX(20px); }
         }
 
         .container {
-            background-color: var(--light-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background-color: var(--paper-bg);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             width: 100%;
-            max-width: 500px;
-            padding: 30px;
+            max-width: 520px;
+            padding: 40px 30px 30px 30px;
             box-sizing: border-box;
-            border: 3px solid var(--gold);
-            text-align: center;
+            position: relative;
+            /* Zuckerstangen / Airmail-Rahmenmuster */
+            border: 16px solid transparent;
+            border-image: repeating-linear-gradient(45deg, #990000, #990000 20px, #ffffff 20px, #ffffff 40px) 16;
+            text-align: left;
         }
 
         h1 {
+            font-family: 'Mountains of Christmas', cursive;
             color: var(--primary-red);
-            margin-bottom: 5px;
-            font-size: 2rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin: 0 0 5px 0;
+            font-size: 2.8rem;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
         }
 
         .subtitle {
+            font-family: 'Caveat', cursive;
             color: #666;
-            font-size: 0.95rem;
+            font-size: 1.4rem;
             margin-bottom: 25px;
         }
 
         .phase-badge {
-            background-color: var(--gold);
-            color: var(--dark-red);
+            font-family: 'Caveat', cursive;
+            background-color: var(--primary-red);
+            color: white;
             font-weight: bold;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 1.1rem;
             display: inline-block;
             margin-bottom: 15px;
         }
 
-        .card {
-            background-color: var(--primary-red);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            text-align: left;
-        }
-
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: bold;
             font-size: 0.95rem;
+            color: #444;
         }
 
         select, textarea {
             width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #d4c5b9;
+            background-color: #fff;
             font-size: 1rem;
             margin-bottom: 15px;
             box-sizing: border-box;
@@ -92,336 +109,41 @@
         textarea {
             resize: vertical;
             height: 90px;
+            background-image: linear-gradient(to bottom, transparent 31px, #f0e6d6 31px);
+            background-size: 100% 32px;
+            line-height: 32px;
+            padding-top: 2px;
         }
 
         button {
             background-color: var(--primary-red);
             color: white;
-            border: 2px solid var(--gold);
+            border: none;
             padding: 12px 20px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
             transition: background 0.2s, transform 0.1s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
 
         button:hover:not(:disabled) {
             background-color: var(--dark-red);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         button:disabled {
             background-color: #cccccc;
-            border-color: #999999;
             cursor: not-allowed;
             transform: none;
         }
 
         .status-box {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            text-align: left;
-            max-height: 180px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-        }
-
-        .status-box h3 {
-            margin-top: 0;
-            font-size: 0.95rem;
-            color: var(--primary-red);
-            border-bottom: 2px solid #eee;
-            padding-bottom: 5px;
-        }
-
-        .status-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 0.85rem;
-        }
-
-        .status-list li {
-            padding: 4px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .done { color: #2e7d32; font-weight: bold; }
-        .pending { color: #c62828; }
-
-        .result-box {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px dashed var(--gold);
-            margin-top: 20px;
-        }
-
-        .avatar {
-            font-size: 3.5rem;
-            margin: 10px 0;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .info-text {
-            font-size: 0.85rem;
-            color: #555;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>Wichtelo-Mat</h1>
-    <div class="subtitle">🎄 Unsere jährliche Weihnachtstradition 🎄</div>
-
-    <!-- PHASE 1: WUNSCHZETTEL EINTRAGEN -->
-    <div id="phase1-container">
-        <div class="phase-badge">Schritt 1: Wunschzettel hinterlegen</div>
-        <div class="card">
-            <label for="userSelect">Wer bist du?</label>
-            <select id="userSelect" onchange="loadUserWishes()">
-                <option value="">-- Bitte wähle deinen Namen --</option>
-            </select>
-
-            <label for="wishInput">Dein Geschenkwunsch / Budget:</label>
-            <textarea id="wishInput" placeholder="Z. B. Bücher, Tee oder Gutschein (ca. 20€)..." oninput="saveCurrentWish()"></textarea>
-
-            <button onclick="submitWish()">Wunschzettel absenden</button>
-        </div>
-
-        <div class="status-box">
-            <h3>Status der Wunschzettel:</h3>
-            <ul id="statusList" class="status-list">
-                <!-- Wird per JS gefüllt -->
-            </ul>
-        </div>
-
-        <div style="margin-top: 20px;">
-            <button id="goToPhase2Btn" onclick="checkPhase2()" style="background-color: #2e7d32; border-color: var(--gold);">
-                Weiter zur Auslosung ➔
-            </button>
-            <div id="phase2Hint" class="info-text">Erst verfügbar, wenn alle 14 Wunschzettel eingereicht wurden!</div>
-        </div>
-    </div>
-
-    <!-- PHASE 2: LOS ZIEHEN -->
-    <div id="phase2-container" class="hidden">
-        <div class="phase-badge">Schritt 2: Das Wichteln</div>
-        <div class="card">
-            <label for="drawUserSelect">Wähle nochmal deinen Namen:</label>
-            <select id="drawUserSelect">
-                <option value="">-- Bitte wähle deinen Namen --</option>
-            </select>
-
-            <button onclick="drawLos()" style="margin-top: 10px;">Jetzt Los ziehen! 🎁</button>
-        </div>
-
-        <div id="resultArea" class="hidden result-box">
-            <h3>Dein Wichtel ist:</h3>
-            <div id="avatarEmoji" class="avatar">🎅</div>
-            <h2 id="wichtelNameResult" style="color: var(--primary-red); margin: 5px 0;">-</h2>
-            <div style="background: #fff8f8; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem;">
-                <strong>Wunschzettel:</strong> <span id="wichtelWishResult">-</span>
-            </div>
-            <p class="info-text" style="margin-top: 15px;">💾 Mache dir am besten einen Screenshot oder schreibe es dir auf!</p>
-        </div>
-
-        <button onclick="backToPhase1()" style="background-color: #666; margin-top: 15px; font-size: 0.9rem; padding: 8px;">Zurück zur Übersicht</button>
-    </div>
-
-</div>
-
-<script>
-    const familyMembers = [
-        "Julian", "Lucas", "Andrea", "Thomas", "Paula", 
-        "Sabine N.", "Holger", "Anna", "Lara", "Peter", 
-        "Dani", "Johanna", "Linda", "Sabine S."
-    ];
-
-    const avatars = ["🎅", "🤶", "🦌", "🎄", "⛄", "🎁", "⭐", "🍪", "🛷", "🔔", "🌟", "🤶", "🎄", "🎁"];
-
-    // Ausschlussregeln im Hintergrund
-    const rules = {
-        "Julian": ["Lucas", "Andrea", "Thomas"],
-        "Lucas": ["Julian", "Lucas", "Thomas"],
-        "Andrea": ["Julian", "Lucas", "Thomas"],
-        "Thomas": ["Julian", "Lucas", "Andrea"],
-        "Paula": ["Holger", "Sabine N."],
-        "Sabine N.": ["Paula", "Holger"],
-        "Holger": ["Paula", "Sabine N."],
-        "Anna": ["Lara", "Dani", "Peter"],
-        "Lara": ["Anna", "Dani", "Peter"],
-        "Peter": ["Anna", "Dani", "Lara"],
-        "Dani": ["Anna", "Peter", "Lara"],
-        "Johanna": ["Sabine S.", "Linda"],
-        "Linda": ["Sabine S.", "Johanna"],
-        "Sabine S.": ["Linda", "Johanna"]
-    };
-
-    // Daten im Browser-Speicher (LocalStorage) sichern, damit es für alle erreichbar bleibt
-    let wishes = JSON.parse(localStorage.getItem('wichtel_wishes')) || {};
-    let assignments = JSON.parse(localStorage.getItem('wichtel_assignments')) || {};
-
-    const funnyFaces = ["😜", "🥳", "😎", "🤩", "😇", "🤪", "🤠", "🤓", "🤭", "🤫", "🥳", "😎", "🤩", "😜"];
-
-    function init() {
-        const select1 = document.getElementById('userSelect');
-        const select2 = document.getElementById('drawUserSelect');
-        
-        familyMembers.forEach((name, index) => {
-            let opt1 = document.createElement('option');
-            opt1.value = name;
-            opt1.textContent = name;
-            select1.appendChild(opt1);
-
-            let opt2 = document.createElement('option');
-            opt2.value = name;
-            opt2.textContent = name;
-            select2.appendChild(opt2);
-        });
-
-        updateStatusList();
-    }
-
-    function loadUserWishes() {
-        const name = document.getElementById('userSelect').value;
-        const wishInput = document.getElementById('wishInput');
-        if (name && wishes[name]) {
-            wishInput.value = wishes[name];
-        } else {
-            wishInput.value = '';
-        }
-    }
-
-    function saveCurrentWish() {
-        const name = document.getElementById('userSelect').value;
-        const wish = document.getElementById('wishInput').value;
-        if (name) {
-            wishes[name] = wish;
-            localStorage.setItem('wichtel_wishes', JSON.stringify(wishes));
-        }
-    }
-
-    function submitWish() {
-        const name = document.getElementById('userSelect').value;
-        const wish = document.getElementById('wishInput').value;
-        if (!name) {
-            alert("Bitte wähle zuerst deinen Namen aus!");
-            return;
-        }
-        wishes[name] = wish;
-        localStorage.setItem('wichtel_wishes', JSON.stringify(wishes));
-        updateStatusList();
-        alert("Dein Wunschzettel wurde erfolgreich gespeichert! 🎄");
-    }
-
-    function updateStatusList() {
-        const list = document.getElementById('statusList');
-        list.innerHTML = '';
-        
-        let allSubmitted = true;
-        familyMembers.forEach(name => {
-            const li = document.createElement('li');
-            const hasWish = wishes[name] && wishes[name].trim() !== "";
-            if (!hasWish) allSubmitted = false;
-
-            li.innerHTML = `<span>${name}</span> <span class="${hasWish ? 'done' : 'pending'}">${hasWish ? 'Hinterlegt ✓' : 'Ausstehend ⏳'}</span>`;
-            list.appendChild(li);
-        });
-
-        const btn = document.getElementById('goToPhase2Btn');
-        const hint = document.getElementById('phase2Hint');
-        if (allSubmitted) {
-            btn.disabled = false;
-            hint.textContent = "Alle Wunschzettel da! Die Auslosung ist bereit.";
-            hint.style.color = "#2e7d32";
-        } else {
-            btn.disabled = true;
-            hint.textContent = "Erst verfügbar, wenn alle 14 Wunschzettel eingereicht wurden!";
-            hint.style.color = "#555";
-        }
-    }
-
-    function checkPhase2() {
-        document.getElementById('phase1-container').classList.add('hidden');
-        document.getElementById('phase2-container').classList.remove('hidden');
-    }
-
-    function backToPhase1() {
-        document.getElementById('phase2-container').classList.add('hidden');
-        document.getElementById('phase1-container').classList.remove('hidden');
-    }
-
-    function performGlobalDraw() {
-        // Falls noch nicht ausgelost, jetzt für alle festlegen unter Beachtung der Regeln
-        let recipients = [...familyMembers];
-        let success = false;
-        let attempts = 0;
-
-        while (!success && attempts < 1000) {
-            attempts++;
-            recipients.sort(() => Math.random() - 0.5);
-            success = true;
-            let tempAssigned = {};
-
-            for (let i = 0; i < familyMembers.length; i++) {
-                let giver = familyMembers[i];
-                let receiver = recipients[i];
-                let forbidden = rules[giver] || [];
-
-                if (giver === receiver || forbidden.includes(receiver)) {
-                    success = false;
-                    break;
-                }
-                tempAssigned[giver] = receiver;
-            }
-            if (success) {
-                assignments = tempAssigned;
-                localStorage.setItem('wichtel_assignments', JSON.stringify(assignments));
-            }
-        }
-    }
-
-    function drawLos() {
-        const name = document.getElementById('drawUserSelect').value;
-        if (!name) {
-            alert("Bitte wähle deinen Namen aus!");
-            return;
-        }
-
-        // Prüfen ob Auslosung existiert, sonst generieren
-        if (Object.keys(assignments).length === 0) {
-            performGlobalDraw();
-        }
-
-        const target = assignments[name];
-        const targetWish = wishes[target] || "Kein Wunsch angegeben.";
-        const randomFace = funnyFaces[Math.floor(Math.random() * funnyFaces.length)];
-
-        const resultArea = document.getElementById('resultArea');
-        const avatarEl = document.getElementById('avatarEmoji');
-        const nameEl = document.getElementById('wichtelNameResult');
-        const wishEl = document.getElementById('wichtelWishResult');
-
-        avatarEl.textContent = randomFace;
-        nameEl.textContent = target;
-        wishEl.textContent = targetWish;
-        resultArea.classList.remove('hidden');
-    }
-
-    window.onload = init;
-</script>
-
-</body>
-</html>
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            border: 1px solid #e2d2c3;
+            max-height:
