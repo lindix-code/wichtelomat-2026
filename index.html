@@ -231,10 +231,10 @@
             <option value="">-- Bitte wähle deinen Namen --</option>
         </select>
 
-        <label for="wishInput" style="font-family: 'Caveat', cursive; font-size: 1.3rem; margin-top: 10px;">Lieber Wichtel, hier kommt mein Wunsch für dieses Jahr....</label>
+        <label for="wishInput" style="font-family: 'Caveat', cursive; font-size: 1.3rem; margin-top: 10px;">Lieber Wichtel, hier kommt mein Wunsch für dieses Jahr:</label>
         <textarea id="wishInput" placeholder="Schreibe hier deine Wünsche hinein..." oninput="saveCurrentWish()"></textarea>
 
-        <button onclick="submitWish()" style="background-color: var(--primary-red); color: white;">Schritt 1: Wunschzettel ausfüllen.</button>
+        <button onclick="submitWish()" style="background-color: var(--primary-red); color: white;">Wunschzettel absenden.</button>
 
         <div class="status-box">
             <h3>Status der Wunschzettel:</h3>
@@ -245,7 +245,7 @@
             <button id="goToPhase2Btn" onclick="checkPhase2()" style="background-color: #2e7d32; color: white;">
                 Weiter zur Auslosung ➔
             </button>
-            <div id="phase2Hint" class="info-text">Erst verfügbar, wenn alle 14 Wunschzettel eingereicht wurden!</div>
+            <div id="phase2Hint" class="info-text">Die Auslosung startet, wenn alle Wunschzettel eingereicht wurden!</div>
         </div>
     </div>
 
