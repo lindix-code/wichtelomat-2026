@@ -146,4 +146,302 @@
             padding: 12px;
             margin-top: 15px;
             border: 1px solid #e2d2c3;
-            max-height:
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .status-box h3 {
+            margin-top: 0;
+            font-size: 0.95rem;
+            color: var(--primary-red);
+            border-bottom: 1px solid #e2d2c3;
+            padding-bottom: 4px;
+        }
+
+        .status-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        .status-list li {
+            padding: 3px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .done { color: #2e7d32; font-weight: bold; }
+        .pending { color: #c62828; }
+
+        .result-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px dashed var(--primary-red);
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .avatar {
+            font-size: 3.2rem;
+            margin: 5px 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .info-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Schneeflocken Generator -->
+    <script>
+        for (let i = 0; i < 35; i++) {
+            let flake = document.createElement('div');
+            flake.className = 'snowflake';
+            flake.style.left = Math.random() * 100 + 'vw';
+            flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            flake.style.animationDelay = (Math.random() * 5) + 's';
+            let size = (Math.random() * 6 + 4) + 'px';
+            flake.style.width = size;
+            flake.style.height = size;
+            document.body.appendChild(flake);
+        }
+    </script>
+
+<div class="container">
+    <h1>Wichtelo-Mat</h1>
+    <div class="subtitle">🎄 Unsere jährliche Weihnachtstradition 🎄</div>
+
+    <!-- PHASE 1: WUNSCHZETTEL EINTRAGEN -->
+    <div id="phase1-container">
+        <div class="phase-badge">Schritt 1: Wunschzettel hinterlegen</div>
+        
+        <label for="userSelect">Wer bist du?</label>
+        <select id="userSelect" onchange="loadUserWishes()">
+            <option value="">-- Bitte wähle deinen Namen --</option>
+        </select>
+
+        <label for="wishInput" style="font-family: 'Caveat', cursive; font-size: 1.3rem; margin-top: 10px;">Lieber Wichtel, hier kommt mein Wunsch für dieses Jahr....</label>
+        <textarea id="wishInput" placeholder="Schreibe hier deine Wünsche hinein..." oninput="saveCurrentWish()"></textarea>
+
+        <button onclick="submitWish()" style="background-color: var(--primary-red); color: white;">Schritt 1: Wunschzettel ausfüllen.</button>
+
+        <div class="status-box">
+            <h3>Status der Wunschzettel:</h3>
+            <ul id="statusList" class="status-list"></ul>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <button id="goToPhase2Btn" onclick="checkPhase2()" style="background-color: #2e7d32; color: white;">
+                Weiter zur Auslosung ➔
+            </button>
+            <div id="phase2Hint" class="info-text">Erst verfügbar, wenn alle 14 Wunschzettel eingereicht wurden!</div>
+        </div>
+    </div>
+
+    <!-- PHASE 2: LOS ZIEHEN -->
+    <div id="phase2-container" class="hidden">
+        <div class="phase-badge">Schritt 2: Das Wichteln</div>
+        
+        <label for="drawUserSelect">Wähle nochmal deinen Namen:</label>
+        <select id="drawUserSelect">
+            <option value="">-- Bitte wähle deinen Namen --</option>
+        </select>
+
+        <button onclick="drawLos()" style="margin-top: 5px; background-color: var(--primary-red); color: white;">Jetzt Los ziehen!</button>
+
+        <div id="resultArea" class="hidden result-box">
+            <h3 style="margin-top:0; color: var(--primary-red);">Dein Wichtel ist:</h3>
+            <div id="avatarEmoji" class="avatar">🎅</div>
+            <h2 id="wichtelNameResult" style="color: var(--primary-red); margin: 5px 0; font-family: 'Mountains of Christmas', cursive; font-size: 2.2rem;">-</h2>
+            <div style="background: #fff8f8; padding: 8px; border-radius: 6px; margin-top: 8px; font-size: 0.9rem; text-align: left;">
+                <strong>Wunschzettel:</strong> <span id="wichtelWishResult">-</span>
+            </div>
+            <p class="info-text" style="margin-top: 10px;">💾 Mache dir am besten einen Screenshot!</p>
+        </div>
+
+        <button onclick="backToPhase1()" style="background-color: #777; color: white; margin-top: 15px; font-size: 0.9rem; padding: 8px;">Zurück zur Übersicht</button>
+    </div>
+
+</div>
+
+<script>
+    const familyMembers = [
+        "Julian", "Lucas", "Andrea", "Thomas", "Paula", 
+        "Sabine N.", "Holger", "Anna", "Lara", "Peter", 
+        "Dani", "Johanna", "Linda", "Sabine S."
+    ];
+
+    const rules = {
+        "Julian": ["Lucas", "Andrea", "Thomas"],
+        "Lucas": ["Julian", "Lucas", "Thomas"],
+        "Andrea": ["Julian", "Lucas", "Thomas"],
+        "Thomas": ["Julian", "Lucas", "Andrea"],
+        "Paula": ["Holger", "Sabine N."],
+        "Sabine N.": ["Paula", "Holger"],
+        "Holger": ["Paula", "Sabine N."],
+        "Anna": ["Lara", "Dani", "Peter"],
+        "Lara": ["Anna", "Dani", "Peter"],
+        "Peter": ["Anna", "Dani", "Lara"],
+        "Dani": ["Anna", "Peter", "Lara"],
+        "Johanna": ["Sabine S.", "Linda"],
+        "Linda": ["Sabine S.", "Johanna"],
+        "Sabine S.": ["Linda", "Johanna"]
+    };
+
+    let wishes = JSON.parse(localStorage.getItem('wichtel_wishes')) || {};
+    let assignments = JSON.parse(localStorage.getItem('wichtel_assignments')) || {};
+    const funnyFaces = ["😜", "🥳", "😎", "🤩", "😇", "🤪", "🤠", "🤓", "🤭", "🤫", "🥳", "😎", "🤩", "😜"];
+
+    function init() {
+        const select1 = document.getElementById('userSelect');
+        const select2 = document.getElementById('drawUserSelect');
+        
+        familyMembers.forEach(name => {
+            let opt1 = document.createElement('option');
+            opt1.value = name;
+            opt1.textContent = name;
+            select1.appendChild(opt1);
+
+            let opt2 = document.createElement('option');
+            opt2.value = name;
+            opt2.textContent = name;
+            select2.appendChild(opt2);
+        });
+
+        updateStatusList();
+    }
+
+    function loadUserWishes() {
+        const name = document.getElementById('userSelect').value;
+        const wishInput = document.getElementById('wishInput');
+        if (name && wishes[name]) {
+            wishInput.value = wishes[name];
+        } else {
+            wishInput.value = '';
+        }
+    }
+
+    function saveCurrentWish() {
+        const name = document.getElementById('userSelect').value;
+        const wish = document.getElementById('wishInput').value;
+        if (name) {
+            wishes[name] = wish;
+            localStorage.setItem('wichtel_wishes', JSON.stringify(wishes));
+        }
+    }
+
+    function submitWish() {
+        const name = document.getElementById('userSelect').value;
+        const wish = document.getElementById('wishInput').value;
+        if (!name) {
+            alert("Bitte wähle zuerst deinen Namen aus!");
+            return;
+        }
+        wishes[name] = wish;
+        localStorage.setItem('wichtel_wishes', JSON.stringify(wishes));
+        updateStatusList();
+        alert("Dein Wunschzettel wurde erfolgreich gespeichert! 🎄");
+    }
+
+    function updateStatusList() {
+        const list = document.getElementById('statusList');
+        list.innerHTML = '';
+        
+        let allSubmitted = true;
+        familyMembers.forEach(name => {
+            const li = document.createElement('li');
+            const hasWish = wishes[name] && wishes[name].trim() !== "";
+            if (!hasWish) allSubmitted = false;
+
+            li.innerHTML = `<span>${name}</span> <span class="${hasWish ? 'done' : 'pending'}">${hasWish ? 'Hinterlegt ✓' : 'Ausstehend ⏳'}</span>`;
+            list.appendChild(li);
+        });
+
+        const btn = document.getElementById('goToPhase2Btn');
+        const hint = document.getElementById('phase2Hint');
+        if (allSubmitted) {
+            btn.disabled = false;
+            hint.textContent = "Alle Wunschzettel da! Die Auslosung ist bereit.";
+            hint.style.color = "#2e7d32";
+        } else {
+            btn.disabled = true;
+            hint.textContent = "Erst verfügbar, wenn alle 14 Wunschzettel eingereicht wurden!";
+            hint.style.color = "#555";
+        }
+    }
+
+    function checkPhase2() {
+        document.getElementById('phase1-container').classList.add('hidden');
+        document.getElementById('phase2-container').classList.remove('hidden');
+    }
+
+    function backToPhase1() {
+        document.getElementById('phase2-container').classList.add('hidden');
+        document.getElementById('phase1-container').classList.remove('hidden');
+    }
+
+    function performGlobalDraw() {
+        let recipients = [...familyMembers];
+        let success = false;
+        let attempts = 0;
+
+        while (!success && attempts < 1000) {
+            attempts++;
+            recipients.sort(() => Math.random() - 0.5);
+            success = true;
+            let tempAssigned = {};
+
+            for (let i = 0; i < familyMembers.length; i++) {
+                let giver = familyMembers[i];
+                let receiver = recipients[i];
+                let forbidden = rules[giver] || [];
+
+                if (giver === receiver || forbidden.includes(receiver)) {
+                    success = false;
+                    break;
+                }
+                tempAssigned[giver] = receiver;
+            }
+            if (success) {
+                assignments = tempAssigned;
+                localStorage.setItem('wichtel_assignments', JSON.stringify(assignments));
+            }
+        }
+    }
+
+    function drawLos() {
+        const name = document.getElementById('drawUserSelect').value;
+        if (!name) {
+            alert("Bitte wähle deinen Namen aus!");
+            return;
+        }
+
+        if (Object.keys(assignments).length === 0) {
+            performGlobalDraw();
+        }
+
+        const target = assignments[name];
+        const targetWish = wishes[target] || "Kein Wunsch angegeben.";
+        const randomFace = funnyFaces[Math.floor(Math.random() * funnyFaces.length)];
+
+        document.getElementById('avatarEmoji').textContent = randomFace;
+        document.getElementById('wichtelNameResult').textContent = target;
+        document.getElementById('wichtelWishResult').textContent = targetWish;
+        document.getElementById('resultArea').classList.remove('hidden');
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
