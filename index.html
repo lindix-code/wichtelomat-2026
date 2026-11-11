@@ -224,12 +224,12 @@
             word-break: break-word;
         }
         .share-title {
-            margin: 18px 0 8px;
-            font-size: 0.85rem;
-            color: #777;
+            margin: 18px 0 10px;
+            font-size: 0.9rem;
+            color: #666;
         }
         .share-row { display: flex; gap: 10px; }
-        .share-btn { flex: 1; font-size: 1rem; padding: 11px 8px; }
+        .share-btn { flex: 1; padding: 10px 8px; display: flex; align-items: center; justify-content: center; }
         .share-btn.wa { background-color: #25a244; }
         .share-btn.wa:hover:not(:disabled) { background-color: #1b7d33; }
         .share-btn.mail { background-color: #1f5fa8; }
@@ -342,14 +342,24 @@
             <div id="avatarEmoji" class="avatar">🎅</div>
             <h2 id="wichtelNameResult" style="color: var(--primary-red); margin: 5px 0; font-family: 'Mountains of Christmas', cursive; font-size: 2.2rem;">-</h2>
             <div class="wish-card">
-                <div class="wish-title">🎁 Das wünscht sich <span id="wishName"></span>:</div>
+                <div class="wish-title">Wunschzettel:</div>
                 <div id="wichtelWishResult" class="wish-text">-</div>
             </div>
 
-            <div class="share-title">Merken &amp; teilen</div>
+            <div class="share-title">Mache am besten einen Screenshot!</div>
             <div class="share-row">
-                <button id="shareWhatsapp" class="share-btn wa" onclick="shareWhatsapp()">WhatsApp</button>
-                <button id="shareMail" class="share-btn mail" onclick="shareMail()">E-Mail</button>
+                <button id="shareWhatsapp" class="share-btn wa" onclick="shareWhatsapp()" aria-label="Per WhatsApp teilen" title="Per WhatsApp teilen">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3.5 20.5l1.3-4.4A8.5 8.5 0 1 1 8 19.3z"/>
+                        <path d="M9 8.6c.2 2.9 2.7 5.6 5.7 6.4l1.5-1.4-2-1.2-.9.8c-1-.4-1.9-1.3-2.4-2.3l.8-.9-1.2-2z" fill="currentColor" stroke="none"/>
+                    </svg>
+                </button>
+                <button id="shareMail" class="share-btn mail" onclick="shareMail()" aria-label="Per E-Mail senden" title="Per E-Mail senden">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="5" width="18" height="14" rx="2.5"/>
+                        <path d="M3.5 7l8.5 6.5L20.5 7"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -646,7 +656,6 @@
         const target = assignments[name];
         showAvatar(target);
         document.getElementById('wichtelNameResult').textContent = target;
-        document.getElementById('wishName').textContent = target;
         document.getElementById('wichtelWishResult').textContent = wishes[target] || "Kein Wunsch angegeben.";
         currentResult = { name: target, wish: wishes[target] || "Kein Wunsch angegeben." };
         document.getElementById('resultArea').classList.remove('hidden');
