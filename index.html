@@ -189,6 +189,23 @@
             margin: 5px 0;
         }
 
+        /* Wichtel-Gesicht (Sticker-Look) */
+        .avatar-img {
+            display: block;
+            max-width: 75%;
+            max-height: 300px;
+            width: auto;
+            height: auto;
+            margin: 10px auto 5px;
+            filter: drop-shadow(0 6px 8px rgba(0,0,0,0.3));
+            animation: pop-in 0.6s cubic-bezier(.2, 1.4, .4, 1) both;
+        }
+
+        @keyframes pop-in {
+            0%   { transform: scale(0.3) rotate(-12deg); opacity: 0; }
+            100% { transform: scale(1) rotate(-3deg); opacity: 1; }
+        }
+
         .hidden {
             display: none !important;
         }
@@ -299,6 +316,30 @@
     groups.forEach(g => g.forEach(n => { rules[n] = g.filter(m => m !== n); }));
 
     const funnyFaces = ["😜", "🥳", "😎", "🤩", "😇", "🤪", "🤠", "🤓", "🤭", "🤫"];
+
+    // Gesichter der Familie (Ordner "gesichter/"). Wer hier fehlt, bekommt ein Emoji als Platzhalter.
+    const faces = {
+        "Paula": "gesichter/paula.webp",
+        "Julian": "gesichter/julian.webp",
+        "Lucas": "gesichter/lucas.webp",
+        "Linda": "gesichter/linda.webp",
+        "Dani": "gesichter/dani.webp",
+        "Sabine N.": "gesichter/sabine-n.webp"
+    };
+
+    function showAvatar(name) {
+        const box = document.getElementById('avatarEmoji');
+        box.innerHTML = '';
+        if (faces[name]) {
+            const img = document.createElement('img');
+            img.className = 'avatar-img';
+            img.src = faces[name];
+            img.alt = name;
+            box.appendChild(img);
+        } else {
+            box.textContent = funnyFaces[Math.floor(Math.random() * funnyFaces.length)];
+        }
+    }
     let wishes = {};
     let assignments = {};
 
@@ -483,8 +524,7 @@
 
         const target = assignments[name];
         const targetWish = wishes[target] || "Kein Wunsch angegeben.";
-        const randomFace = funnyFaces[Math.floor(Math.random() * funnyFaces.length)];
-        document.getElementById('avatarEmoji').textContent = randomFace;
+        showAvatar(target);
         document.getElementById('wichtelNameResult').textContent = target;
         document.getElementById('wichtelWishResult').textContent = targetWish;
         document.getElementById('resultArea').classList.remove('hidden');

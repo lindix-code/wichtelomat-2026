@@ -36,6 +36,7 @@ Ohne URL läuft die Seite im Demo-Modus (Daten nur im eigenen Browser).
 ## Anpassen
 - **Teilnehmer:** `familyMembers` im Skript.
 - **Wer nicht wen beschenken darf:** `groups` im Skript. Innerhalb einer Gruppe wird nicht untereinander gewichtelt.
+- **Gesichter:** Bilder in `gesichter/` ablegen (WebP/PNG mit transparentem Hintergrund) und in `faces` im Skript eintragen. Wer dort fehlt, bekommt ein Emoji.
 - **Budget:** Text im Hinweis unter dem Wunschfeld.
 
 ## Hinweise
