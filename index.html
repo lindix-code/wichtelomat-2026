@@ -201,6 +201,35 @@
             animation: pop-in 0.6s cubic-bezier(.2, 1.4, .4, 1) both;
         }
 
+        .countdown-box { text-align: center; padding: 10px 0 20px; }
+        .countdown-label { font-family: 'Caveat', cursive; font-size: 1.6rem; color: #666; }
+        .countdown-number {
+            font-family: 'Mountains of Christmas', cursive;
+            font-size: 9rem;
+            line-height: 1.1;
+            color: var(--primary-red);
+            text-shadow: 3px 3px 0 rgba(212,175,55,0.6);
+        }
+        .countdown-number.tick { animation: tick 1s ease-out both; }
+        @keyframes tick {
+            0%   { transform: scale(2.2); opacity: 0; }
+            25%  { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.85); opacity: 0.5; }
+        }
+        .confetti {
+            position: fixed;
+            top: -20px;
+            width: 10px;
+            height: 16px;
+            pointer-events: none;
+            z-index: 10;
+            animation: confetti-fall linear forwards;
+        }
+        @keyframes confetti-fall {
+            0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0.9; }
+        }
+
         @keyframes pop-in {
             0%   { transform: scale(0.3) rotate(-12deg); opacity: 0; }
             100% { transform: scale(1) rotate(-3deg); opacity: 1; }
@@ -260,23 +289,21 @@
         </div>
 
         <div style="margin-top: 15px;">
-            <button id="goToPhase2Btn" onclick="checkPhase2()" style="background-color: #2e7d32; color: white;">
-                Weiter zur Auslosung ➔
+            <button id="drawBtn" onclick="startDraw()" style="background-color: #2e7d32; color: white;">
+                Jetzt Los ziehen! 🎁
             </button>
             <div id="phase2Hint" class="info-text">Die Auslosung startet, wenn alle Wunschzettel eingereicht wurden!</div>
         </div>
     </div>
 
-    <!-- PHASE 2: LOS ZIEHEN -->
+    <!-- PHASE 2: COUNTDOWN + VERKÜNDUNG -->
     <div id="phase2-container" class="hidden">
         <div class="phase-badge">Schritt 2: Das Wichteln</div>
-        
-        <label for="drawUserSelect">Wähle nochmal deinen Namen:</label>
-        <select id="drawUserSelect">
-            <option value="">-- Bitte wähle deinen Namen --</option>
-        </select>
 
-        <button onclick="drawLos()" style="margin-top: 5px; background-color: var(--primary-red); color: white;">Jetzt Los ziehen!</button>
+        <div id="countdownArea" class="countdown-box hidden">
+            <div class="countdown-label">Dein Wichtel wird gezogen in …</div>
+            <div id="countdownNumber" class="countdown-number">5</div>
+        </div>
 
         <div id="resultArea" class="hidden result-box">
             <h3 style="margin-top:0; color: var(--primary-red);">Dein Wichtel ist:</h3>
@@ -288,7 +315,7 @@
             <p class="info-text" style="margin-top: 10px;">💾 Mache dir am besten einen Screenshot!</p>
         </div>
 
-        <button onclick="backToPhase1()" style="background-color: #777; color: white; margin-top: 15px; font-size: 0.9rem; padding: 8px;">Zurück zur Übersicht</button>
+        <button id="backBtn" class="hidden" onclick="backToPhase1()" style="background-color: #777; color: white; margin-top: 15px; font-size: 0.9rem; padding: 8px;">Zurück zur Übersicht</button>
     </div>
 
 </div>
@@ -384,19 +411,22 @@
     // ---------- Init ----------
     async function init() {
         const select1 = document.getElementById('userSelect');
-        const select2 = document.getElementById('drawUserSelect');
         familyMembers.forEach(name => {
-            [select1, select2].forEach(sel => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                sel.appendChild(opt);
-            });
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select1.appendChild(opt);
         });
+        // Name vom letzten Besuch auf diesem Gerät wieder vorauswählen
+        try {
+            const me = localStorage.getItem('wichtel_me');
+            if (me && familyMembers.includes(me)) select1.value = me;
+        } catch (e) {}
         if (!DB_URL) {
             document.getElementById('budgetHint').textContent += ' (Demo-Modus: Daten nur auf diesem Gerät)';
         }
         await refreshData();
+        loadUserWishes();
         setInterval(refreshData, 20000);
     }
 
@@ -414,6 +444,7 @@
     // ---------- Phase 1 ----------
     function loadUserWishes() {
         const name = document.getElementById('userSelect').value;
+        try { localStorage.setItem('wichtel_me', name); } catch (e) {}
         document.getElementById('wishInput').value = (name && wishes[name]) ? wishes[name] : '';
     }
 
@@ -451,7 +482,7 @@
             list.appendChild(li);
         });
 
-        const btn = document.getElementById('goToPhase2Btn');
+        const btn = document.getElementById('drawBtn');
         const hint = document.getElementById('phase2Hint');
         const drawDone = Object.keys(assignments).length > 0;
         if (allSubmitted || drawDone) {
@@ -466,15 +497,11 @@
     }
 
     // ---------- Phase 2 ----------
-    function checkPhase2() {
-        document.getElementById('phase1-container').classList.add('hidden');
-        document.getElementById('phase2-container').classList.remove('hidden');
-    }
-
     function backToPhase1() {
         document.getElementById('phase2-container').classList.add('hidden');
         document.getElementById('phase1-container').classList.remove('hidden');
         document.getElementById('resultArea').classList.add('hidden');
+        document.getElementById('backBtn').classList.add('hidden');
     }
 
     function shuffle(arr) {
@@ -507,34 +534,80 @@
         return place(0) ? result : null;
     }
 
-    async function drawLos() {
-        const name = document.getElementById('drawUserSelect').value;
-        if (!name) { alert("Bitte wähle deinen Namen aus!"); return; }
-
+    // Holt (oder erzeugt) die Auslosung. Gibt true zurück, wenn alles geklappt hat.
+    async function loadOrCreateAssignments() {
         try {
             assignments = await store.get('assignments');
+            wishes = await store.get('wishes');
             if (Object.keys(assignments).length === 0) {
-                wishes = await store.get('wishes');
                 if (!familyMembers.every(n => wishes[n] && wishes[n].trim())) {
                     alert("Es fehlen noch Wunschzettel. Die Auslosung ist noch nicht möglich.");
-                    return;
+                    return false;
                 }
                 const result = computeAssignments();
-                if (!result) { alert("Mit den aktuellen Regeln ist keine Auslosung möglich."); return; }
+                if (!result) { alert("Mit den aktuellen Regeln ist keine Auslosung möglich."); return false; }
                 await store.putAssignmentsOnce(result);
                 assignments = await store.get('assignments'); // evtl. hat jemand anderes schneller gelost
             }
+            return true;
         } catch (e) {
             alert("Das Laden der Auslosung hat nicht geklappt. Bitte versuche es nochmal.");
-            return;
+            return false;
         }
+    }
+
+    let drawRunning = false;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function startDraw() {
+        if (drawRunning) return;
+        const name = document.getElementById('userSelect').value;
+        if (!name) { alert("Bitte wähle oben zuerst deinen Namen aus!"); return; }
+
+        drawRunning = true;
+        document.getElementById('phase1-container').classList.add('hidden');
+        document.getElementById('phase2-container').classList.remove('hidden');
+        document.getElementById('resultArea').classList.add('hidden');
+        document.getElementById('backBtn').classList.add('hidden');
+        const cdArea = document.getElementById('countdownArea');
+        const cdNum = document.getElementById('countdownNumber');
+        cdArea.classList.remove('hidden');
+
+        // Auslosung im Hintergrund laden, während der Countdown läuft
+        const ready = loadOrCreateAssignments();
+        for (let i = 5; i >= 1; i--) {
+            cdNum.textContent = i;
+            cdNum.classList.remove('tick');
+            void cdNum.offsetWidth; // Animation neu starten
+            cdNum.classList.add('tick');
+            await sleep(1000);
+        }
+        const ok = await ready;
+        cdArea.classList.add('hidden');
+        drawRunning = false;
+        if (!ok) { backToPhase1(); return; }
 
         const target = assignments[name];
-        const targetWish = wishes[target] || "Kein Wunsch angegeben.";
         showAvatar(target);
         document.getElementById('wichtelNameResult').textContent = target;
-        document.getElementById('wichtelWishResult').textContent = targetWish;
+        document.getElementById('wichtelWishResult').textContent = wishes[target] || "Kein Wunsch angegeben.";
         document.getElementById('resultArea').classList.remove('hidden');
+        document.getElementById('backBtn').classList.remove('hidden');
+        launchConfetti();
+    }
+
+    function launchConfetti() {
+        const colors = ['#990000', '#2e7d32', '#d4af37', '#ffffff', '#c62828'];
+        for (let i = 0; i < 70; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.background = colors[i % colors.length];
+            c.style.animationDuration = (Math.random() * 2 + 2.5) + 's';
+            c.style.animationDelay = (Math.random() * 0.8) + 's';
+            document.body.appendChild(c);
+            setTimeout(() => c.remove(), 6000);
+        }
     }
 
     window.onload = init;

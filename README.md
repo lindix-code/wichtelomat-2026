@@ -29,9 +29,10 @@ Ohne URL läuft die Seite im Demo-Modus (Daten nur im eigenen Browser).
 4. Diesen Link an die Familie schicken.
 
 ## Ablauf für die Familie
-1. Namen auswählen, Wunschzettel schreiben, absenden.
-2. Wenn alle 14 Wunschzettel da sind, wird „Weiter zur Auslosung“ freigeschaltet.
-3. Namen auswählen, „Jetzt Los ziehen!“ drücken. Die Auslosung gilt für alle gleich und bleibt gespeichert.
+1. Seite öffnen und den eigenen Namen auswählen (wird auf dem Gerät gemerkt).
+2. Wunschzettel schreiben und absenden.
+3. Sobald alle 14 Wunschzettel da sind, wird „Jetzt Los ziehen!“ aktiv.
+4. Button drücken: Nach einem 5-Sekunden-Countdown erscheint der Wichtel mit Gesicht und Namen. Die Auslosung gilt für alle gleich und bleibt gespeichert.
 
 ## Anpassen
 - **Teilnehmer:** `familyMembers` im Skript.
