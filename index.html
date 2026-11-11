@@ -233,7 +233,7 @@
 
         <label for="wishInput" style="font-family: 'Caveat', cursive; font-size: 1.3rem; margin-top: 10px;">Lieber Wichtel, hier kommt mein Wunsch für dieses Jahr:</label>
         <textarea id="wishInput" placeholder="Schreibe hier deine Wünsche hinein..." oninput="saveCurrentWish()"></textarea>
-         <div id="phase2Hint" class="info-text">Das diesjährige Wichtelbudget beträgt 25€.</div>
+         <div id="budgetHint" class="info-text">Das diesjährige Wichtelbudget beträgt 25€.</div>
 
         <button onclick="submitWish()" style="background-color: var(--primary-red); color: white;">Wunschzettel absenden.</button>
 
@@ -277,80 +277,111 @@
 </div>
 
 <script>
+    // ---------- Konfiguration ----------
+    // URL deiner Firebase Realtime Database, z. B. "https://wichtelomat-xxxx-default-rtdb.europe-west1.firebasedatabase.app"
+    // Leer lassen = Demo-Modus (Daten nur in diesem Browser).
+    const DB_URL = "";
+
     const familyMembers = [
-        "Julian", "Lucas", "Andrea", "Thomas", "Paula", 
-        "Sabine N.", "Holger", "Anna", "Lara", "Peter", 
+        "Julian", "Lucas", "Andrea", "Thomas", "Paula",
+        "Sabine N.", "Holger", "Anna", "Lara", "Peter",
         "Dani", "Johanna", "Linda", "Sabine S."
     ];
 
-    const rules = {
-        "Julian": ["Lucas", "Andrea", "Thomas"],
-        "Lucas": ["Julian", "Lucas", "Thomas"],
-        "Andrea": ["Julian", "Lucas", "Thomas"],
-        "Thomas": ["Julian", "Lucas", "Andrea"],
-        "Paula": ["Holger", "Sabine N."],
-        "Sabine N.": ["Paula", "Holger"],
-        "Holger": ["Paula", "Sabine N."],
-        "Anna": ["Lara", "Dani", "Peter"],
-        "Lara": ["Anna", "Dani", "Peter"],
-        "Peter": ["Anna", "Dani", "Lara"],
-        "Dani": ["Anna", "Peter", "Lara"],
-        "Johanna": ["Sabine S.", "Linda"],
-        "Linda": ["Sabine S.", "Johanna"],
-        "Sabine S.": ["Linda", "Johanna"]
+    // Gruppen: Innerhalb einer Gruppe wird nicht untereinander gewichtelt.
+    const groups = [
+        ["Julian", "Lucas", "Andrea", "Thomas"],
+        ["Paula", "Sabine N.", "Holger"],
+        ["Anna", "Lara", "Peter", "Dani"],
+        ["Johanna", "Linda", "Sabine S."]
+    ];
+    const rules = {};
+    groups.forEach(g => g.forEach(n => { rules[n] = g.filter(m => m !== n); }));
+
+    const funnyFaces = ["😜", "🥳", "😎", "🤩", "😇", "🤪", "🤠", "🤓", "🤭", "🤫"];
+    let wishes = {};
+    let assignments = {};
+
+    // ---------- Speicher (Firebase REST oder localStorage) ----------
+    const store = {
+        async get(key) {
+            if (!DB_URL) return JSON.parse(localStorage.getItem('wichtel_' + key)) || {};
+            const r = await fetch(`${DB_URL}/${key}.json`);
+            if (!r.ok) throw new Error('Laden fehlgeschlagen');
+            return (await r.json()) || {};
+        },
+        async put(key, value) {
+            if (!DB_URL) { localStorage.setItem('wichtel_' + key, JSON.stringify(value)); return; }
+            const r = await fetch(`${DB_URL}/${key}.json`, { method: 'PUT', body: JSON.stringify(value) });
+            if (!r.ok) throw new Error('Speichern fehlgeschlagen');
+        },
+        // Lose nur schreiben, wenn noch keine existieren (verhindert doppelte Auslosung)
+        async putAssignmentsOnce(value) {
+            if (!DB_URL) {
+                if (localStorage.getItem('wichtel_assignments')) return false;
+                localStorage.setItem('wichtel_assignments', JSON.stringify(value));
+                return true;
+            }
+            const r = await fetch(`${DB_URL}/assignments.json`, {
+                method: 'PUT',
+                headers: { 'if-match': 'null_etag' },
+                body: JSON.stringify(value)
+            });
+            if (r.status === 412) return false;
+            if (!r.ok) throw new Error('Speichern fehlgeschlagen');
+            return true;
+        }
     };
 
-    let wishes = JSON.parse(localStorage.getItem('wichtel_wishes')) || {};
-    let assignments = JSON.parse(localStorage.getItem('wichtel_assignments')) || {};
-    const funnyFaces = ["😜", "🥳", "😎", "🤩", "😇", "🤪", "🤠", "🤓", "🤭", "🤫", "🥳", "😎", "🤩", "😜"];
-
-    function init() {
+    // ---------- Init ----------
+    async function init() {
         const select1 = document.getElementById('userSelect');
         const select2 = document.getElementById('drawUserSelect');
-        
         familyMembers.forEach(name => {
-            let opt1 = document.createElement('option');
-            opt1.value = name;
-            opt1.textContent = name;
-            select1.appendChild(opt1);
-
-            let opt2 = document.createElement('option');
-            opt2.value = name;
-            opt2.textContent = name;
-            select2.appendChild(opt2);
+            [select1, select2].forEach(sel => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                sel.appendChild(opt);
+            });
         });
+        if (!DB_URL) {
+            document.getElementById('budgetHint').textContent += ' (Demo-Modus: Daten nur auf diesem Gerät)';
+        }
+        await refreshData();
+        setInterval(refreshData, 20000);
+    }
 
+    async function refreshData() {
+        try {
+            wishes = await store.get('wishes');
+            assignments = await store.get('assignments');
+        } catch (e) {
+            document.getElementById('phase2Hint').textContent = 'Verbindung zum Speicher fehlgeschlagen. Bitte Seite neu laden.';
+            return;
+        }
         updateStatusList();
     }
 
+    // ---------- Phase 1 ----------
     function loadUserWishes() {
         const name = document.getElementById('userSelect').value;
-        const wishInput = document.getElementById('wishInput');
-        if (name && wishes[name]) {
-            wishInput.value = wishes[name];
-        } else {
-            wishInput.value = '';
-        }
+        document.getElementById('wishInput').value = (name && wishes[name]) ? wishes[name] : '';
     }
 
-    function saveCurrentWish() {
+    async function submitWish() {
         const name = document.getElementById('userSelect').value;
-        const wish = document.getElementById('wishInput').value;
-        if (name) {
+        const wish = document.getElementById('wishInput').value.trim();
+        if (!name) { alert("Bitte wähle zuerst deinen Namen aus!"); return; }
+        if (!wish) { alert("Bitte schreibe mindestens einen Wunsch auf."); return; }
+        try {
+            wishes = await store.get('wishes');
             wishes[name] = wish;
-            localStorage.setItem('wichtel_wishes', JSON.stringify(wishes));
-        }
-    }
-
-    function submitWish() {
-        const name = document.getElementById('userSelect').value;
-        const wish = document.getElementById('wishInput').value;
-        if (!name) {
-            alert("Bitte wähle zuerst deinen Namen aus!");
+            await store.put('wishes', wishes);
+        } catch (e) {
+            alert("Das Speichern hat leider nicht geklappt. Bitte versuche es nochmal.");
             return;
         }
-        wishes[name] = wish;
-        localStorage.setItem('wichtel_wishes', JSON.stringify(wishes));
         updateStatusList();
         alert("Dein Wunschzettel wurde erfolgreich gespeichert! 🎄");
     }
@@ -358,30 +389,35 @@
     function updateStatusList() {
         const list = document.getElementById('statusList');
         list.innerHTML = '';
-        
         let allSubmitted = true;
         familyMembers.forEach(name => {
             const li = document.createElement('li');
             const hasWish = wishes[name] && wishes[name].trim() !== "";
             if (!hasWish) allSubmitted = false;
-
-            li.innerHTML = `<span>${name}</span> <span class="${hasWish ? 'done' : 'pending'}">${hasWish ? 'Hinterlegt ✓' : 'Ausstehend ⏳'}</span>`;
+            const nameEl = document.createElement('span');
+            nameEl.textContent = name;
+            const stateEl = document.createElement('span');
+            stateEl.className = hasWish ? 'done' : 'pending';
+            stateEl.textContent = hasWish ? 'Hinterlegt ✓' : 'Ausstehend ⏳';
+            li.append(nameEl, stateEl);
             list.appendChild(li);
         });
 
         const btn = document.getElementById('goToPhase2Btn');
         const hint = document.getElementById('phase2Hint');
-        if (allSubmitted) {
+        const drawDone = Object.keys(assignments).length > 0;
+        if (allSubmitted || drawDone) {
             btn.disabled = false;
-            hint.textContent = "Alle Wunschzettel da! Die Auslosung ist bereit.";
+            hint.textContent = drawDone ? "Die Auslosung ist erfolgt – zieh dein Los!" : "Alle Wunschzettel da! Die Auslosung ist bereit.";
             hint.style.color = "#2e7d32";
         } else {
             btn.disabled = true;
-            hint.textContent = "Erst verfügbar, wenn alle 14 Wunschzettel eingereicht wurden!";
+            hint.textContent = `Erst verfügbar, wenn alle ${familyMembers.length} Wunschzettel eingereicht wurden!`;
             hint.style.color = "#555";
         }
     }
 
+    // ---------- Phase 2 ----------
     function checkPhase2() {
         document.getElementById('phase1-container').classList.add('hidden');
         document.getElementById('phase2-container').classList.remove('hidden');
@@ -390,52 +426,64 @@
     function backToPhase1() {
         document.getElementById('phase2-container').classList.add('hidden');
         document.getElementById('phase1-container').classList.remove('hidden');
+        document.getElementById('resultArea').classList.add('hidden');
     }
 
-    function performGlobalDraw() {
-        let recipients = [...familyMembers];
-        let success = false;
-        let attempts = 0;
-
-        while (!success && attempts < 1000) {
-            attempts++;
-            recipients.sort(() => Math.random() - 0.5);
-            success = true;
-            let tempAssigned = {};
-
-            for (let i = 0; i < familyMembers.length; i++) {
-                let giver = familyMembers[i];
-                let receiver = recipients[i];
-                let forbidden = rules[giver] || [];
-
-                if (giver === receiver || forbidden.includes(receiver)) {
-                    success = false;
-                    break;
-                }
-                tempAssigned[giver] = receiver;
-            }
-            if (success) {
-                assignments = tempAssigned;
-                localStorage.setItem('wichtel_assignments', JSON.stringify(assignments));
-            }
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
         }
+        return arr;
     }
 
-    function drawLos() {
+    // Zufälliges Backtracking: findet immer eine gültige Zuordnung, falls eine existiert.
+    function computeAssignments() {
+        const givers = shuffle([...familyMembers]);
+        const taken = new Set();
+        const result = {};
+        function place(i) {
+            if (i === givers.length) return true;
+            const giver = givers[i];
+            const options = shuffle(familyMembers.filter(r =>
+                r !== giver && !(rules[giver] || []).includes(r) && !taken.has(r)));
+            for (const r of options) {
+                result[giver] = r;
+                taken.add(r);
+                if (place(i + 1)) return true;
+                taken.delete(r);
+                delete result[giver];
+            }
+            return false;
+        }
+        return place(0) ? result : null;
+    }
+
+    async function drawLos() {
         const name = document.getElementById('drawUserSelect').value;
-        if (!name) {
-            alert("Bitte wähle deinen Namen aus!");
-            return;
-        }
+        if (!name) { alert("Bitte wähle deinen Namen aus!"); return; }
 
-        if (Object.keys(assignments).length === 0) {
-            performGlobalDraw();
+        try {
+            assignments = await store.get('assignments');
+            if (Object.keys(assignments).length === 0) {
+                wishes = await store.get('wishes');
+                if (!familyMembers.every(n => wishes[n] && wishes[n].trim())) {
+                    alert("Es fehlen noch Wunschzettel. Die Auslosung ist noch nicht möglich.");
+                    return;
+                }
+                const result = computeAssignments();
+                if (!result) { alert("Mit den aktuellen Regeln ist keine Auslosung möglich."); return; }
+                await store.putAssignmentsOnce(result);
+                assignments = await store.get('assignments'); // evtl. hat jemand anderes schneller gelost
+            }
+        } catch (e) {
+            alert("Das Laden der Auslosung hat nicht geklappt. Bitte versuche es nochmal.");
+            return;
         }
 
         const target = assignments[name];
         const targetWish = wishes[target] || "Kein Wunsch angegeben.";
         const randomFace = funnyFaces[Math.floor(Math.random() * funnyFaces.length)];
-
         document.getElementById('avatarEmoji').textContent = randomFace;
         document.getElementById('wichtelNameResult').textContent = target;
         document.getElementById('wichtelWishResult').textContent = targetWish;
