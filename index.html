@@ -201,6 +201,40 @@
             animation: pop-in 0.6s cubic-bezier(.2, 1.4, .4, 1) both;
         }
 
+        .wish-card {
+            background: #fff8f0;
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            text-align: center;
+        }
+        .wish-title {
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            color: var(--primary-red);
+            margin-bottom: 6px;
+        }
+        .wish-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            line-height: 1.45;
+            color: #222;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .share-title {
+            margin: 18px 0 8px;
+            font-size: 0.85rem;
+            color: #777;
+        }
+        .share-row { display: flex; gap: 10px; }
+        .share-btn { flex: 1; font-size: 1rem; padding: 11px 8px; }
+        .share-btn.wa { background-color: #25a244; }
+        .share-btn.wa:hover:not(:disabled) { background-color: #1b7d33; }
+        .share-btn.mail { background-color: #1f5fa8; }
+        .share-btn.mail:hover:not(:disabled) { background-color: #164a85; }
+
         .countdown-box { text-align: center; padding: 10px 0 20px; }
         .countdown-label { font-family: 'Caveat', cursive; font-size: 1.6rem; color: #666; }
         .countdown-number {
@@ -298,8 +332,6 @@
 
     <!-- PHASE 2: COUNTDOWN + VERKÜNDUNG -->
     <div id="phase2-container" class="hidden">
-        <div class="phase-badge">Schritt 2: Das Wichteln</div>
-
         <div id="countdownArea" class="countdown-box hidden">
             <div class="countdown-label">Dein Wichtel wird gezogen in …</div>
             <div id="countdownNumber" class="countdown-number">5</div>
@@ -309,10 +341,16 @@
             <h3 style="margin-top:0; color: var(--primary-red);">Dein Wichtel ist:</h3>
             <div id="avatarEmoji" class="avatar">🎅</div>
             <h2 id="wichtelNameResult" style="color: var(--primary-red); margin: 5px 0; font-family: 'Mountains of Christmas', cursive; font-size: 2.2rem;">-</h2>
-            <div style="background: #fff8f8; padding: 8px; border-radius: 6px; margin-top: 8px; font-size: 0.9rem; text-align: left;">
-                <strong>Wunschzettel:</strong> <span id="wichtelWishResult">-</span>
+            <div class="wish-card">
+                <div class="wish-title">🎁 Das wünscht sich <span id="wishName"></span>:</div>
+                <div id="wichtelWishResult" class="wish-text">-</div>
             </div>
-            <p class="info-text" style="margin-top: 10px;">💾 Mache dir am besten einen Screenshot!</p>
+
+            <div class="share-title">Merken &amp; teilen</div>
+            <div class="share-row">
+                <button id="shareWhatsapp" class="share-btn wa" onclick="shareWhatsapp()">WhatsApp</button>
+                <button id="shareMail" class="share-btn mail" onclick="shareMail()">E-Mail</button>
+            </div>
         </div>
 
         <button id="backBtn" class="hidden" onclick="backToPhase1()" style="background-color: #777; color: white; margin-top: 15px; font-size: 0.9rem; padding: 8px;">Zurück zur Übersicht</button>
@@ -556,6 +594,24 @@
         }
     }
 
+    let currentResult = null;
+
+    function shareText() {
+        return `🎅 Mein Wichtel beim Familien-Wichteln 2026: ${currentResult.name}\n\n🎁 Das wünscht sich ${currentResult.name}:\n${currentResult.wish}`;
+    }
+
+    function shareWhatsapp() {
+        if (!currentResult) return;
+        window.open('https://wa.me/?text=' + encodeURIComponent(shareText()), '_blank');
+    }
+
+    function shareMail() {
+        if (!currentResult) return;
+        const subject = 'Mein Wichtel 2026: ' + currentResult.name;
+        window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) +
+            '&body=' + encodeURIComponent(shareText());
+    }
+
     let drawRunning = false;
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -590,7 +646,9 @@
         const target = assignments[name];
         showAvatar(target);
         document.getElementById('wichtelNameResult').textContent = target;
+        document.getElementById('wishName').textContent = target;
         document.getElementById('wichtelWishResult').textContent = wishes[target] || "Kein Wunsch angegeben.";
+        currentResult = { name: target, wish: wishes[target] || "Kein Wunsch angegeben." };
         document.getElementById('resultArea').classList.remove('hidden');
         document.getElementById('backBtn').classList.remove('hidden');
         launchConfetti();
