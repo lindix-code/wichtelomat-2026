@@ -34,13 +34,6 @@ Ohne URL läuft die Seite im Demo-Modus (Daten nur im eigenen Browser).
 3. Sobald alle 14 Wunschzettel da sind, wird „Jetzt Los ziehen!“ aktiv.
 4. Button drücken: Nach einem 5-Sekunden-Countdown erscheint der Wichtel mit Gesicht und Namen. Die Auslosung gilt für alle gleich und bleibt gespeichert.
 
-## Testmodus
-Die Seite mit `?test` am Ende der Adresse öffnen (z. B. `https://lindix-code.github.io/wichtelomat-2026/?test`). Unten erscheint ein orangefarbenes Feld mit zwei Knöpfen:
-- **Alle Wunschzettel mit Beispieltexten füllen:** Damit lässt sich „Jetzt Los ziehen!“ sofort ausprobieren.
-- **Alles zurücksetzen:** Löscht alle Wunschzettel und die Auslosung.
-
-Ohne Firebase-URL wirkt der Testmodus nur auf dem eigenen Gerät. Mit Firebase-URL gilt er für die echte Datenbank und fragt vorher nach. Vor dem Start mit der Familie einmal „Alles zurücksetzen“ drücken.
-
 ## Anpassen
 - **Teilnehmer:** `familyMembers` im Skript.
 - **Wer nicht wen beschenken darf:** `groups` im Skript. Innerhalb einer Gruppe wird nicht untereinander gewichtelt.
