@@ -336,7 +336,7 @@
 
         <label for="wishInput" style="font-family: 'Caveat', cursive; font-size: 1.3rem; margin-top: 10px;">Lieber Wichtel, hier kommt mein Wunsch für dieses Jahr:</label>
         <textarea id="wishInput" placeholder="Schreibe hier deine Wünsche hinein..." oninput="saveCurrentWish()"></textarea>
-         <div id="budgetHint" class="info-text">Das diesjährige Wichtelbudget beträgt 25€.</div>
+         <div id="budgetHint" class="info-text" style="margin: 14px 0 12px;">Das diesjährige Wichtelbudget beträgt 25€.</div>
 
         <button onclick="submitWish()" style="background-color: var(--primary-red); color: white;">Wunschzettel absenden.</button>
         <div id="saveBanner" class="save-banner hidden" role="status" aria-live="polite">Dein Wunschzettel ist gespeichert! 🎄</div>
@@ -451,12 +451,18 @@
     let assignments = {};
 
     // ---------- Speicher (Firebase REST oder localStorage) ----------
+    // Firebase erlaubt in Schlüsseln keine Punkte (z. B. "Sabine S."). Beim Speichern wird "." daher
+    // durch "%2E" ersetzt und beim Laden wieder zurückverwandelt.
+    const encKey = k => k.replace(/\./g, '%2E');
+    const decKey = k => k.replace(/%2E/g, '.');
+    const mapKeys = (obj, fn) => Object.fromEntries(Object.entries(obj || {}).map(([k, v]) => [fn(k), v]));
+
     const store = {
         async get(key) {
             if (!DB_URL) return JSON.parse(localStorage.getItem('wichtel_' + key)) || {};
             const r = await fetch(`${DB_URL}/${key}.json`);
             if (!r.ok) throw new Error('Laden fehlgeschlagen');
-            return (await r.json()) || {};
+            return mapKeys(await r.json(), decKey);
         },
         async remove(key) {
             if (!DB_URL) { localStorage.removeItem('wichtel_' + key); return; }
@@ -465,7 +471,7 @@
         },
         async put(key, value) {
             if (!DB_URL) { localStorage.setItem('wichtel_' + key, JSON.stringify(value)); return; }
-            const r = await fetch(`${DB_URL}/${key}.json`, { method: 'PUT', body: JSON.stringify(value) });
+            const r = await fetch(`${DB_URL}/${key}.json`, { method: 'PUT', body: JSON.stringify(mapKeys(value, encKey)) });
             if (!r.ok) throw new Error('Speichern fehlgeschlagen');
         },
         // Lose nur schreiben, wenn noch keine existieren (verhindert doppelte Auslosung)
@@ -478,7 +484,7 @@
             const r = await fetch(`${DB_URL}/assignments.json`, {
                 method: 'PUT',
                 headers: { 'if-match': 'null_etag' },
-                body: JSON.stringify(value)
+                body: JSON.stringify(mapKeys(value, encKey))
             });
             if (r.status === 412) return false;
             if (!r.ok) throw new Error('Speichern fehlgeschlagen');
