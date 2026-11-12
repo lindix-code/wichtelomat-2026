@@ -240,17 +240,23 @@
         .share-btn.mail { background-color: #1f5fa8; }
         .share-btn.mail:hover:not(:disabled) { background-color: #164a85; }
 
-        .test-panel {
-            margin-top: 20px;
-            padding: 12px 14px;
-            border: 2px dashed #e65100;
+
+        .save-banner {
+            margin-top: 12px;
+            padding: 12px 16px;
             border-radius: 10px;
-            background: #fff3e0;
-            font-size: 0.85rem;
+            background: #e8f5e9;
+            border: 2px solid #2e7d32;
+            color: #1b5e20;
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            text-align: center;
+            animation: bannerIn 0.4s ease-out;
         }
-        .test-panel h3 { margin: 0 0 6px; color: #e65100; font-size: 1rem; }
-        .test-panel button { font-size: 0.9rem; padding: 9px 12px; margin-top: 8px; background-color: #e65100; }
-        .test-panel button.danger { background-color: #b71c1c; }
+        @keyframes bannerIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .countdown-box { text-align: center; padding: 10px 0 20px; }
         .countdown-label { font-family: 'Caveat', cursive; font-size: 1.6rem; color: #666; }
@@ -333,6 +339,7 @@
          <div id="budgetHint" class="info-text">Das diesjährige Wichtelbudget beträgt 25€.</div>
 
         <button onclick="submitWish()" style="background-color: var(--primary-red); color: white;">Wunschzettel absenden.</button>
+        <div id="saveBanner" class="save-banner hidden" role="status" aria-live="polite">Dein Wunschzettel ist gespeichert! 🎄</div>
 
         <div class="status-box">
             <h3>Status der Wunschzettel:</h3>
@@ -344,14 +351,6 @@
                 Jetzt Los ziehen! 🎁
             </button>
             <div id="phase2Hint" class="info-text">Die Auslosung startet, wenn alle Wunschzettel eingereicht wurden!</div>
-        </div>
-
-        <!-- TESTMODUS (nur sichtbar mit ?test in der Adresse) -->
-        <div id="testPanel" class="test-panel hidden">
-            <h3>🧪 Testmodus</h3>
-            <div id="testModeInfo"></div>
-            <button onclick="testFillWishes()">Alle Wunschzettel mit Beispieltexten füllen</button>
-            <button class="danger" onclick="testReset()">Alles zurücksetzen (Wünsche + Auslosung löschen)</button>
         </div>
     </div>
 
@@ -506,7 +505,6 @@
         }
         await refreshData();
         loadUserWishes();
-        initTestMode();
         setInterval(refreshData, 20000);
     }
 
@@ -525,8 +523,11 @@
     function loadUserWishes() {
         const name = document.getElementById('userSelect').value;
         try { localStorage.setItem('wichtel_me', name); } catch (e) {}
+        document.getElementById('saveBanner').classList.add('hidden');
         document.getElementById('wishInput').value = (name && wishes[name]) ? wishes[name] : '';
     }
+
+    let bannerTimer = null;
 
     async function submitWish() {
         const name = document.getElementById('userSelect').value;
@@ -542,7 +543,11 @@
             return;
         }
         updateStatusList();
-        alert("Dein Wunschzettel wurde erfolgreich gespeichert! 🎄");
+        const banner = document.getElementById('saveBanner');
+        banner.classList.remove('hidden');
+        banner.style.animation = 'none'; void banner.offsetWidth; banner.style.animation = '';
+        clearTimeout(bannerTimer);
+        bannerTimer = setTimeout(() => banner.classList.add('hidden'), 6000);
     }
 
     function updateStatusList() {
@@ -635,51 +640,6 @@
             alert("Das Laden der Auslosung hat nicht geklappt. Bitte versuche es nochmal.");
             return false;
         }
-    }
-
-    // ---------- Testmodus (Adresse mit ?test aufrufen) ----------
-    const sampleWishes = [
-        "Ein gutes Buch", "Eine kuschelige Wolldecke", "Feine Schokolade", "Eine Kerze mit Tannenduft",
-        "Ein Gutschein für ein Café", "Warme Socken", "Ein Puzzle", "Ein Brettspiel für Abende zu zweit",
-        "Eine schöne Tasse mit Tee", "Ein Notizbuch", "Gewürze zum Ausprobieren", "Eine Pflanze fürs Fensterbrett",
-        "Hörbuch-Gutschein", "Leckere Plätzchen"
-    ];
-
-    function initTestMode() {
-        if (!new URLSearchParams(location.search).has('test')) return;
-        document.getElementById('testPanel').classList.remove('hidden');
-        document.getElementById('testModeInfo').innerHTML = DB_URL
-            ? '<strong style="color:#b71c1c">Achtung: LIVE-Datenbank!</strong> Alle Änderungen gelten für die ganze Familie.'
-            : 'Demo-Modus: Alles bleibt nur auf <strong>diesem Gerät</strong>, die Familie sieht nichts davon.';
-    }
-
-    async function testFillWishes() {
-        if (DB_URL && !confirm("Das ist die LIVE-Datenbank. Wirklich alle fehlenden Wunschzettel mit Beispieltexten füllen?")) return;
-        try {
-            wishes = await store.get('wishes');
-            familyMembers.forEach((n, i) => {
-                if (!wishes[n] || !wishes[n].trim()) wishes[n] = sampleWishes[i % sampleWishes.length];
-            });
-            await store.put('wishes', wishes);
-        } catch (e) { alert("Das hat nicht geklappt: " + e.message); return; }
-        loadUserWishes();
-        updateStatusList();
-        alert("Alle Wunschzettel sind gefüllt. Jetzt kannst du „Jetzt Los ziehen!“ testen.");
-    }
-
-    async function testReset() {
-        const warn = DB_URL
-            ? "ACHTUNG: Das ist die LIVE-Datenbank! Alle Wunschzettel und die Auslosung werden für ALLE gelöscht. Wirklich zurücksetzen?"
-            : "Alle Wunschzettel und die Auslosung auf diesem Gerät löschen?";
-        if (!confirm(warn)) return;
-        try {
-            await store.remove('wishes');
-            await store.remove('assignments');
-        } catch (e) { alert("Das hat nicht geklappt: " + e.message); return; }
-        wishes = {}; assignments = {}; currentResult = null;
-        document.getElementById('wishInput').value = '';
-        updateStatusList();
-        alert("Alles zurückgesetzt. Du kannst wieder von vorn beginnen.");
     }
 
     let currentResult = null;
