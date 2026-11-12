@@ -29,13 +29,22 @@ Ohne URL läuft die Seite im Demo-Modus (Daten nur im eigenen Browser).
 4. Diesen Link an die Familie schicken.
 
 ## Ablauf für die Familie
-1. Namen auswählen, Wunschzettel schreiben, absenden.
-2. Wenn alle 14 Wunschzettel da sind, wird „Weiter zur Auslosung“ freigeschaltet.
-3. Namen auswählen, „Jetzt Los ziehen!“ drücken. Die Auslosung gilt für alle gleich und bleibt gespeichert.
+1. Seite öffnen und den eigenen Namen auswählen (wird auf dem Gerät gemerkt).
+2. Wunschzettel schreiben und absenden.
+3. Sobald alle 14 Wunschzettel da sind, wird „Jetzt Los ziehen!“ aktiv.
+4. Button drücken: Nach einem 5-Sekunden-Countdown erscheint der Wichtel mit Gesicht und Namen. Die Auslosung gilt für alle gleich und bleibt gespeichert.
+
+## Testmodus
+Die Seite mit `?test` am Ende der Adresse öffnen (z. B. `https://lindix-code.github.io/wichtelomat-2026/?test`). Unten erscheint ein orangefarbenes Feld mit zwei Knöpfen:
+- **Alle Wunschzettel mit Beispieltexten füllen:** Damit lässt sich „Jetzt Los ziehen!“ sofort ausprobieren.
+- **Alles zurücksetzen:** Löscht alle Wunschzettel und die Auslosung.
+
+Ohne Firebase-URL wirkt der Testmodus nur auf dem eigenen Gerät. Mit Firebase-URL gilt er für die echte Datenbank und fragt vorher nach. Vor dem Start mit der Familie einmal „Alles zurücksetzen“ drücken.
 
 ## Anpassen
 - **Teilnehmer:** `familyMembers` im Skript.
 - **Wer nicht wen beschenken darf:** `groups` im Skript. Innerhalb einer Gruppe wird nicht untereinander gewichtelt.
+- **Gesichter:** Bilder in `gesichter/` ablegen (WebP/PNG mit transparentem Hintergrund) und in `faces` im Skript eintragen. Wer dort fehlt, bekommt ein Emoji.
 - **Budget:** Text im Hinweis unter dem Wunschfeld.
 
 ## Hinweise
